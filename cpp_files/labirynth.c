@@ -10,46 +10,81 @@ void createStartAndEndPoint(Labirynth *l){
     int y=0;
     do{
         x=rand()%l->size;
-    }while(x%2==0);
+    }while(x%4==0);
 
     do{
         y=rand()%l->size;
-    }while(y%2==0);
+    }while(y%4==0);
     l->labirynth[y][x]='P';
     l->start_point_x=x;
     l->start_point_y=y;
 
     do{
         x=rand()%l->size;
-    }while(x%2==0 || x==l->start_point_x);
+    }while(x%4==0 || x==l->start_point_x);
 
     do{
         y=rand()%l->size;
-    }while(y%2==0 || y==l->start_point_y);
+    }while(y%4==0 || y==l->start_point_y);
 
     l->labirynth[y][x]='E';
     l->end_point_x=x;
     l->end_point_y=y;
 }
 
-static void dfs(Labirynth *l, char *is_visited, DisjointSet *ds, const int x, const int y, const int prev_x, const int prev_y){
+static void dfs(Labirynth *l, char *is_visited, DisjointSet *ds, const int x, const int y, const Direction d){
     if(x<=0 || y<=0 || x>=l->size || y>=l->size || is_visited[x*l->size+y]){
         return;
     }
     is_visited[x*l->size+y]=1;
 
-    if(find(ds, prev_x*l->size+prev_y)!=find(ds, x*l->size+y)){
-        l->labirynth[(prev_x+x)/2][(prev_y+y)/2]=' ';
-        unionize(ds, prev_x*l->size+prev_y, x*l->size+y);
+    // if(find(ds, prev_x*l->size+prev_y)!=find(ds, x*l->size+y)){
+        // l->labirynth[(prev_x+x)/2][(prev_y+y)/2]=' ';
+
+    switch(d){
+        case LEFT:{
+            if(find(ds, x*l->size+y)!=find(ds, x*l->size+y+4)){
+                for(int i=0;i<3;++i){
+                    l->labirynth[x/4*4+i+1][y/4*4+4]=' ';
+                }
+                unionize(ds, x*l->size+y+4, x*l->size+y);
+            }
+
+        }break;
+        case RIGHT:{
+            if(find(ds, x*l->size+y)!=find(ds, x*l->size+y-4)){
+                for(int i=0;i<3;++i){
+                    l->labirynth[x/4*4+i+1][y/4*4]=' ';
+                }
+                unionize(ds, x*l->size+y-4, x*l->size+y);
+            }
+        }break;
+        case UP:{
+            if(find(ds, x*l->size+y)!=find(ds, (x+4)*l->size+y)){
+                for(int i=0;i<3;++i){
+                    l->labirynth[x/4*4+4][y/4*4+i+1]=' ';
+                }
+                unionize(ds, (x+4)*l->size+y, x*l->size+y);
+            }
+        }break;
+        case DOWN:{
+            if(find(ds, x*l->size+y)!=find(ds, (x-4)*l->size+y)){
+                for(int i=0;i<3;++i){
+                    l->labirynth[x/4*4][y/4*4+i+1]=' ';
+                }
+                unionize(ds, (x-4)*l->size+y, x*l->size+y);
+            }
+        }break;
+        return;
     }
 
     int permutation=createPermutation();
     for(int i=0;i<4;++i){
         switch(permutation%10){
-            case LEFT: dfs(l, is_visited, ds, x, y-2, x, y); break;
-            case RIGHT: dfs(l, is_visited, ds, x, y+2, x, y); break;
-            case UP: dfs(l, is_visited, ds, x-2, y, x, y); break;
-            case DOWN: dfs(l, is_visited, ds, x+2, y, x, y); break;
+            case LEFT: dfs(l, is_visited, ds, x, y-4, LEFT); break;
+            case RIGHT: dfs(l, is_visited, ds, x, y+4, RIGHT); break;
+            case UP: dfs(l, is_visited, ds, x-4, y, UP); break;
+            case DOWN: dfs(l, is_visited, ds, x+4, y, DOWN); break;
         }
         permutation/=10;
     }
@@ -61,13 +96,15 @@ void createPathInLabirynth(Labirynth *l){
 
     char *is_visited=(char*)(calloc(sizeof(char), (l->size)*(l->size)));
 
+    is_visited[l->start_point_x*l->size+l->start_point_y]=1;
+
     int permutation=createPermutation();
     for(int i=0;i<4;++i){
         switch(permutation%10){
-            case LEFT: dfs(l, is_visited, ds, l->start_point_x, l->start_point_y-2, l->start_point_x, l->start_point_y); break;
-            case RIGHT: dfs(l, is_visited, ds, l->start_point_x, l->start_point_y+2, l->start_point_x, l->start_point_y); break;
-            case UP: dfs(l, is_visited, ds, l->start_point_x-2, l->start_point_y, l->start_point_x, l->start_point_y); break;
-            case DOWN: dfs(l, is_visited, ds, l->start_point_x+2, l->start_point_y, l->start_point_x, l->start_point_y); break;
+            case LEFT: dfs(l, is_visited, ds, l->start_point_x, l->start_point_y-4, LEFT); break;
+            case RIGHT: dfs(l, is_visited, ds, l->start_point_x, l->start_point_y+4, RIGHT); break;
+            case UP: dfs(l, is_visited, ds, l->start_point_x-4, l->start_point_y, UP); break;
+            case DOWN: dfs(l, is_visited, ds, l->start_point_x+4, l->start_point_y, DOWN); break;
         }
         permutation/=10;
     }
@@ -82,7 +119,7 @@ Labirynth *createLabirynth(const int size){
     for(int i=0;i<size;++i){
         maze->labirynth[i]=(char*)(malloc(sizeof(char)*size));
         for(int j=0;j<size;++j){
-            if(i%2==0 || j%2==0){
+            if(i%4==0 || j%4==0){
                 maze->labirynth[i][j]='#';
             }
             else{
