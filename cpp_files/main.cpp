@@ -9,7 +9,9 @@
 #include "../header_files/screen.h"
 #include <vector>
 
-float distance_view=150.f;
+#define MENU_START_FRAME_COUNTER 2048
+
+float distance_view=1000.f;
 
 unsigned long long hash(char s[]){
     int i=0;
@@ -54,6 +56,7 @@ int main(){
     unsigned size;
     unsigned long long hashed_value;
     Screen screen=TitleScreen;
+    int frame_counter=0;
 
     int width=1080;
     int height=720;
@@ -66,15 +69,48 @@ int main(){
     Vector3 start_pos;
     Vector3 end_pos;
     Camera camera={0};
+    camera.position=(Vector3){0.0f, 6.0f, 0.0f};
+    camera.target=(Vector3){10.0f, 2.0f, 10.0f};
+    camera.up=(Vector3){0.0f, 1.0f, 0.0f};
+    camera.fovy=60;
+    camera.projection=CAMERA_PERSPECTIVE;
+
     int indexKey=0;
     Rectangle inputBox={width/2 - 100, 180, 225, 50};
+
+    FILE *f=fopen("example_maze.maz", "r");
+    if(f){
+        int x,y,z;
+        fscanf(f, "%d %d %d", &x, &y, &z);
+        while(!feof(f)){
+            positions.push_back(Vector3{x+0.5f, y+0.5f, z+0.5f});
+            fscanf(f, "%d %d %d", &x, &y, &z);
+        }
+    }
+    fclose(f);
 
     while(!WindowShouldClose()){
         switch(screen){
             case TitleScreen:{
+                Vector2 mousePoint={0.f, 0.f};
+                ++frame_counter;
+                if(frame_counter>=MENU_START_FRAME_COUNTER){
+                    frame_counter=0;
+                }
+                if(frame_counter<=MENU_START_FRAME_COUNTER/2){
+                    camera.target.x+=0.05f;
+                    camera.target.z+=0.05f;
+                }
+                else{
+                    camera.target.x-=0.05f;
+                    camera.target.z-=0.05f;
+                }
+                UpdateCameraCustom(&camera, CAMERA_ORBITAL, nullptr);
                 if(IsKeyPressed(KEY_ENTER)){
                     screen=NewGameScreen;
                 }
+                mousePoint=GetMousePosition();
+
             }break;
 
             case NewGameScreen:{
@@ -106,6 +142,7 @@ int main(){
                     size=21;
                     size|=1;
                     screen=LoadingGameScreen;
+                    distance_view=150.f;
                 }
             }break;
 
@@ -117,6 +154,8 @@ int main(){
                 camera.up=(Vector3){0.0f, 1.0f, 0.0f};
                 camera.fovy=60;
                 camera.projection=CAMERA_PERSPECTIVE;
+
+                positions.clear();
                 for(int i=0;i<labirynth->size;++i){
                     for(int j=0;j<labirynth->size;++j){
                         if(labirynth->labirynth[j][i]=='#'){
@@ -149,7 +188,19 @@ int main(){
 
         switch(screen){
             case TitleScreen:{
-                DrawText("TITLE SCREEN!", width/2-40, height/2-30, 40, MAGENTA);
+                BeginMode3D(camera);
+                drawWalls(camera, positions, start_pos, end_pos);
+                EndMode3D();
+                DrawText("Maze game", width/2+40, 15, 40, MAGENTA);
+
+                DrawRectangle(width/3-300, 100, 225, 50, GREEN);
+                DrawText("New game", width/3-280, 105, 40, GRAY);
+
+                DrawRectangle(width*2/3-300, 100, 225, 50, GREEN);
+                DrawText("Load game", width*2/3-290, 105, 40, GRAY);
+
+                DrawRectangle(width-300, 100, 225, 50, GREEN);
+                DrawText("Credits", width-260, 105, 40, GRAY);
             }break;
 
             case NewGameScreen:{

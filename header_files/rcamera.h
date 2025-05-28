@@ -578,7 +578,7 @@ void UpdateCameraCustom(Camera *camera, int mode, Labirynth *labirynth)
     float cameraRotationSpeed = CAMERA_ROTATION_SPEED*GetFrameTime();
     float cameraPanSpeed = CAMERA_PAN_SPEED*GetFrameTime();
 
-    if (mode == CAMERA_CUSTOM) {}
+    if (mode == CAMERA_CUSTOM || mode == CAMERA_ORBITAL) {}
     else
     {
         // Camera rotation
@@ -646,8 +646,8 @@ void UpdateCameraCustom(Camera *camera, int mode, Labirynth *labirynth)
     if ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL) || (mode == CAMERA_FREE))
     {
         // Zoom target distance
-        CameraMoveToTarget(camera, -GetMouseWheelMove());
-        if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraMoveToTarget(camera, 2.0f);
-        if (IsKeyPressed(KEY_KP_ADD)) CameraMoveToTarget(camera, -2.0f);
+        // CameraMoveToTarget(camera, -GetMouseWheelMove());
+        // if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraMoveToTarget(camera, 2.0f);
+        // if (IsKeyPressed(KEY_KP_ADD)) CameraMoveToTarget(camera, -2.0f);
     }
 }
