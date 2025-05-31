@@ -8,6 +8,8 @@
 #include "../header_files/labirynth.h"
 #include "../header_files/screen.h"
 #include <vector>
+#include <queue>
+#include "../header_files/button.h"
 
 #define MENU_START_FRAME_COUNTER 2048
 
@@ -36,7 +38,7 @@ void drawWalls(Camera &camera, std::vector<Vector3>&positions, Vector3 &start_po
         v2.y=positions[i].z-camera.position.z;
         float distance=calcDistance(camera.position, positions[i]);
 
-        if(distance<30.f || (distance<distance_view && fabs(Vector2Angle(v1, v2))<M_PI_4)){
+        if(distance<30.f || (distance<distance_view && fabs(Vector2Angle(v1, v2))<M_PI_4+0.1f)){
             DrawCube(positions[i], 1.f, 5.f, 1.f, LIGHTGRAY);
             DrawCubeWires(positions[i], 1.f, 5.f, 1.f, MAGENTA);
         }
@@ -58,8 +60,8 @@ int main(){
     Screen screen=TitleScreen;
     int frame_counter=0;
 
-    int width=1080;
-    int height=720;
+    const int width=1080;
+    const int height=720;
 
     InitWindow(width, height, "Maze Game");
     SetTargetFPS(60);
@@ -89,10 +91,13 @@ int main(){
     }
     fclose(f);
 
+    GameButton *b1=new GameButton(width/3-300, 100, 225, 50, GREEN, RED, "New game");
+    GameButton *b2=new GameButton(width*2/3-300, 100, 225, 50, GREEN, RED, "Load game");
+    GameButton *b3=new GameButton(width-300, 100, 225, 50, GREEN, RED, "Credits");
+
     while(!WindowShouldClose()){
         switch(screen){
             case TitleScreen:{
-                Vector2 mousePoint={0.f, 0.f};
                 ++frame_counter;
                 if(frame_counter>=MENU_START_FRAME_COUNTER){
                     frame_counter=0;
@@ -106,11 +111,12 @@ int main(){
                     camera.target.z-=0.05f;
                 }
                 UpdateCameraCustom(&camera, CAMERA_ORBITAL, nullptr);
-                if(IsKeyPressed(KEY_ENTER)){
+
+                if(b1->isMouseOn() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
                     screen=NewGameScreen;
                 }
-                mousePoint=GetMousePosition();
-
+                b2->isMouseOn();
+                b3->isMouseOn();
             }break;
 
             case NewGameScreen:{
@@ -192,15 +198,9 @@ int main(){
                 drawWalls(camera, positions, start_pos, end_pos);
                 EndMode3D();
                 DrawText("Maze game", width/2+40, 15, 40, MAGENTA);
-
-                DrawRectangle(width/3-300, 100, 225, 50, GREEN);
-                DrawText("New game", width/3-280, 105, 40, GRAY);
-
-                DrawRectangle(width*2/3-300, 100, 225, 50, GREEN);
-                DrawText("Load game", width*2/3-290, 105, 40, GRAY);
-
-                DrawRectangle(width-300, 100, 225, 50, GREEN);
-                DrawText("Credits", width-260, 105, 40, GRAY);
+                b1->drawButton();
+                b2->drawButton();
+                b3->drawButton();
             }break;
 
             case NewGameScreen:{
@@ -226,5 +226,8 @@ int main(){
     CloseWindow();
 
     deleteLabirynth(labirynth);
+    delete b1;
+    delete b2;
+    delete b3;
     return 0;
 }
